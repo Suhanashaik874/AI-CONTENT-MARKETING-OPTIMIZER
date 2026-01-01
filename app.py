@@ -4,6 +4,7 @@ import numpy as np
 import random
 from datetime import datetime
 import time
+import re
 from typing import Dict, List, Any
 
 # Page configuration
@@ -285,10 +286,15 @@ if 'variations' not in st.session_state:
 if 'test_results' not in st.session_state:
     st.session_state.test_results = {}
 
-# Content Generator Functions (exact same as your HTML)
+# Content Generator Functions (FIXED VERSION - Python syntax)
 def create_hashtag(topic: str) -> str:
-    """Create hashtag from topic"""
-    return topic.replace(/[^\w\s]/g, '').replace(/\s+/g, '').substring(0, 20)
+    """Create hashtag from topic - FIXED Python version"""
+    # Remove non-alphanumeric characters using Python regex
+    cleaned = re.sub(r'[^\w\s]', '', topic)
+    # Remove spaces
+    no_spaces = re.sub(r'\s+', '', cleaned)
+    # Take first 20 characters
+    return no_spaces[:20]
 
 def generate_youtube_content(topic: str) -> str:
     """Generate YouTube content for any topic"""
@@ -622,6 +628,11 @@ def generate_recommendations(winner: Dict, variations: List[Dict], topic: str) -
 
 # Main App Layout
 def main():
+    # Add Font Awesome
+    st.markdown("""
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    """, unsafe_allow_html=True)
+    
     # Create container for the main app
     main_container = st.container()
     
@@ -630,7 +641,7 @@ def main():
         col1, col2 = st.columns([280, 1120])
         
         with col1:
-            # Sidebar
+            # Sidebar Logo
             st.markdown("""
             <div class="sidebar">
                 <div class="logo">
@@ -663,19 +674,6 @@ def main():
                 ):
                     st.session_state.current_platform = platform['id']
                     st.rerun()
-                
-                if is_active:
-                    st.markdown(f"""
-                    <div class="platform-item {active_class}">
-                        <div class="platform-icon">
-                            <i class="{platform['icon']}"></i>
-                        </div>
-                        <div class="platform-info">
-                            <h3>{platform['name']}</h3>
-                            <p>{platform['desc']}</p>
-                        </div>
-                    </div>
-                    """, unsafe_allow_html=True)
         
         with col2:
             # Header
@@ -1012,27 +1010,6 @@ def main():
                 </div>
             </div>
             """, unsafe_allow_html=True)
-
-# Add Font Awesome
-st.markdown("""
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-""", unsafe_allow_html=True)
-
-# JavaScript for interactivity
-st.markdown("""
-<script>
-    // Platform selection simulation
-    document.addEventListener('DOMContentLoaded', function() {
-        const platformItems = document.querySelectorAll('.platform-item');
-        platformItems.forEach(item => {
-            item.addEventListener('click', function() {
-                platformItems.forEach(i => i.classList.remove('active'));
-                this.classList.add('active');
-            });
-        });
-    });
-</script>
-""", unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()
