@@ -1,662 +1,411 @@
 import streamlit as st
-import random
-import time
-from datetime import datetime
+import pandas as pd
+import numpy as np
+from datetime import datetime, timedelta
+import plotly.graph_objects as go
 
-# ==================== PAGE CONFIG ====================
+# Page configuration
 st.set_page_config(
-    page_title="AI Content Optimizer + Test Coach + A/B Testing",
-    page_icon="🤖",
-    layout="wide",
-    initial_sidebar_state="expanded"
+    page_title="AI Content Optimizer",
+    page_icon="🚀",
+    layout="wide"
 )
 
-# ==================== CUSTOM CSS ====================
+# Custom CSS to match your design
 st.markdown("""
 <style>
-    /* Main container styling */
+    /* Main theme colors */
+    :root {
+        --primary: #6366f1;
+        --dark-bg: #0f172a;
+        --card-bg: #1e293b;
+        --text-light: #f8fafc;
+        --text-gray: #94a3b8;
+    }
+    
+    .main {
+        background-color: var(--dark-bg);
+        color: var(--text-light);
+    }
+    
     .stApp {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        padding: 20px;
+        background-color: var(--dark-bg);
     }
     
-    /* Main app container */
-    .main-container {
-        max-width: 1400px;
-        margin: 0 auto;
-        background: white;
-        border-radius: 20px;
-        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-        overflow: hidden;
-        min-height: 90vh;
-    }
-    
-    /* Header */
+    /* Custom header */
     .main-header {
-        font-size: 32px;
-        font-weight: 800;
-        color: #1a1f36;
-        margin-bottom: 8px;
-    }
-    
-    .sub-header {
-        color: #666;
-        font-size: 16px;
-        margin-bottom: 30px;
-    }
-    
-    /* Cards */
-    .pro-card {
-        background: white;
-        border-radius: 12px;
-        padding: 25px;
-        border: 1px solid #e2e8f0;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        margin-bottom: 20px;
-    }
-    
-    .card-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 20px;
-        padding-bottom: 15px;
-        border-bottom: 1px solid #e2e8f0;
-    }
-    
-    .card-title {
-        font-size: 20px;
-        font-weight: 700;
-        color: #1e293b;
-    }
-    
-    .card-subtitle {
-        color: #64748b;
-        font-size: 14px;
-        margin-top: 4px;
-    }
-    
-    /* Badges */
-    .pro-badge {
-        padding: 6px 12px;
-        border-radius: 20px;
-        font-size: 12px;
-        font-weight: 600;
-    }
-    
-    .badge-blue {
-        background: #dbeafe;
-        color: #1d4ed8;
-    }
-    
-    .badge-green {
-        background: #d1fae5;
-        color: #065f46;
-    }
-    
-    .badge-orange {
-        background: #fef3c7;
-        color: #92400e;
-    }
-    
-    /* Platform items */
-    .platform-item {
-        display: flex;
-        align-items: center;
-        gap: 15px;
-        padding: 15px;
-        margin-bottom: 10px;
-        border-radius: 10px;
-        cursor: pointer;
-        transition: all 0.3s;
-        background: rgba(255,255,255,0.05);
-    }
-    
-    .platform-item:hover {
-        background: rgba(255,255,255,0.1);
-    }
-    
-    .platform-item.active {
+        text-align: center;
+        padding: 2rem 0;
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
-    }
-    
-    /* Content variations */
-    .variation-container {
-        border: 2px solid #e2e8f0;
         border-radius: 10px;
-        padding: 20px;
-        margin-bottom: 15px;
-        background: white;
-        transition: all 0.3s;
+        margin-bottom: 2rem;
     }
     
-    .variation-container:hover {
-        border-color: #3b82f6;
-        box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.1);
+    .main-header h1 {
+        color: white;
+        font-size: 3rem;
+        font-weight: bold;
+        margin: 0;
     }
     
-    .variation-container.active {
-        border-color: #10b981;
-        background: #f0f9ff;
+    .main-header p {
+        color: rgba(255,255,255,0.9);
+        font-size: 1.2rem;
+        margin-top: 0.5rem;
     }
     
-    /* Metrics */
-    .metric-big {
-        font-size: 24px;
-        font-weight: 700;
-        font-family: 'Monaco', 'Courier New', monospace;
-        line-height: 1;
+    /* Platform cards */
+    .platform-card {
+        background-color: var(--card-bg);
+        padding: 1.5rem;
+        border-radius: 10px;
+        margin: 0.5rem 0;
+        border-left: 4px solid var(--primary);
+        transition: transform 0.3s;
     }
     
-    .metric-engagement {
-        color: #10b981;
+    .platform-card:hover {
+        transform: translateY(-5px);
     }
     
-    .metric-clarity {
-        color: #f59e0b;
+    .platform-icon {
+        font-size: 2rem;
+        margin-bottom: 1rem;
     }
     
-    .metric-sentiment {
-        color: #3b82f6;
+    /* Content cards */
+    .content-card {
+        background-color: var(--card-bg);
+        padding: 1.5rem;
+        border-radius: 10px;
+        margin: 1rem 0;
+        border: 1px solid #334155;
     }
     
-    .metric-label {
-        font-size: 12px;
-        color: #64748b;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        margin-top: 4px;
+    /* Stats cards */
+    .stat-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 1.5rem;
+        border-radius: 10px;
+        text-align: center;
+        margin: 0.5rem;
     }
     
-    /* Content box */
-    .content-box {
-        background: #f8fafc;
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
-        padding: 20px;
-        font-family: 'Segoe UI', system-ui, sans-serif;
-        white-space: pre-wrap;
-        line-height: 1.6;
-        min-height: 300px;
-        overflow-y: auto;
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: bold;
+        color: white;
+        margin: 0;
+    }
+    
+    .stat-label {
+        color: rgba(255,255,255,0.9);
+        font-size: 0.9rem;
+        margin: 0;
     }
     
     /* Buttons */
-    .generate-btn {
+    .stButton button {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
         border: none;
-        padding: 12px 24px;
+        padding: 0.5rem 2rem;
+        border-radius: 5px;
+        font-weight: bold;
+        width: 100%;
+    }
+    
+    /* Tabs */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 2rem;
+        background-color: var(--card-bg);
+        padding: 0.5rem;
         border-radius: 10px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s;
     }
     
-    .generate-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+    .stTabs [data-baseweb="tab"] {
+        border-radius: 5px;
+        padding: 0.5rem 1rem;
     }
     
-    /* Chart bars */
-    .chart-bar {
-        width: 80px;
-        border-radius: 8px 8px 0 0;
-        background: linear-gradient(to top, #3b82f6, #60a5fa);
-        margin: 0 30px;
-        position: relative;
-    }
-    
-    /* Footer */
-    .footer {
-        margin-top: 40px;
-        padding-top: 20px;
-        border-top: 1px solid #e2e8f0;
-        color: #666;
-        font-size: 14px;
-    }
+    /* Hide default Streamlit elements */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
 </style>
 """, unsafe_allow_html=True)
 
-# ==================== SESSION STATE ====================
-if 'current_topic' not in st.session_state:
-    st.session_state.current_topic = "Machine Learning"
-if 'current_platform' not in st.session_state:
-    st.session_state.current_platform = "youtube"
+# Initialize session state
+if 'topic' not in st.session_state:
+    st.session_state.topic = "Machine Learning"
+if 'test_results' not in st.session_state:
+    st.session_state.test_results = None
 if 'generated_content' not in st.session_state:
-    st.session_state.generated_content = ""
-if 'ab_test_results' not in st.session_state:
-    st.session_state.ab_test_results = None
-if 'variations' not in st.session_state:
-    st.session_state.variations = []
+    st.session_state.generated_content = {}
 
-# ==================== CONTENT GENERATORS ====================
-def generate_youtube_content(topic):
-    return f"""🎬 **YouTube Video: "{topic}" Explained**
+# Header Section
+st.markdown("""
+<div class="main-header">
+    <h1>🎯 AI Content Optimizer</h1>
+    <p>Generate & optimize content for any topic on any platform</p>
+</div>
+""", unsafe_allow_html=True)
 
-🔴 **HOOK (First 15 seconds):**
-"Have you ever wondered about {topic}? Whether you're a beginner or an expert, this video will give you fresh insights that might surprise you!"
+# Create tabs
+tab1, tab2 = st.tabs(["📝 Generate Content", "📊 Test Results"])
 
-📋 **VIDEO STRUCTURE:**
-0:00 - Introduction to {topic}
-1:30 - The Core Concepts Explained
-3:45 - Practical Applications & Examples
-6:15 - Common Misconceptions Debunked
-8:30 - How to Get Started
-10:00 - Future Trends & Predictions
-
-💡 **KEY INSIGHTS:**
-• Understanding the fundamentals of {topic}
-• Real-world applications that matter
-• Step-by-step guide for beginners
-• Expert tips for advanced learners
-
-🎯 **CALL TO ACTION:**
-👍 Like if you learned something new
-🔔 Subscribe for more content on similar topics
-💬 Comment below: What's your experience with {topic}?
-
-📌 **RELATED TOPICS:**
-#{topic.replace(' ', '')} #Education #Learning #Tutorial #HowTo #ExplainerVideo
-
-💎 **PRO TIP:** Bookmark this video for future reference!"""
-
-def generate_twitter_content(topic):
-    hashtag = topic.replace(' ', '')[:20]
-    return f"""🧵 **Twitter Thread: Understanding {topic}**
-
-1/7 Thinking about {topic}? Here's a comprehensive thread breaking down everything you need to know:
-
-2/7 First, let's define {topic} in simple terms. It's essentially [explanation based on topic length and complexity].
-
-3/7 The 3 most important things to know about {topic}:
-1. Point 1
-2. Point 2
-3. Point 3
-
-4/7 Common mistakes people make with {topic} (and how to avoid them):
-• Mistake 1: Description
-• Mistake 2: Description
-• Mistake 3: Description
-
-5/7 Practical applications of {topic} in daily life:
-→ Application 1
-→ Application 2
-→ Application 3
-
-6/7 Future outlook: Where is {topic} heading?
-• Trend 1
-• Trend 2
-• Trend 3
-
-7/7 Want to learn more about {topic}?
-• Follow for daily insights
-• Check resources in my bio
-• Reply with your questions!
-
-#{hashtag} #Thread #Learning #Education #Knowledge"""
-
-def generate_linkedin_content(topic):
-    return f"""**Professional Insight: Mastering "{topic}" in Today's Landscape**
-
-As professionals, understanding {topic} has become increasingly important in our rapidly evolving work environment.
-
-**Why {topic} Matters Now:**
-Recent industry analysis shows that professionals with expertise in {topic} see:
-• 35% higher engagement in projects
-• 42% faster career progression
-• 28% increase in problem-solving efficiency
-
-**Key Strategies for Success with {topic}:**
-
-1. **Start with Fundamentals:** Build a strong foundation before advancing
-2. **Practical Application:** Theory means little without real-world implementation
-3. **Continuous Learning:** {topic} evolves - stay updated with latest developments
-4. **Network Effect:** Connect with others interested in {topic}
-
-**Actionable Steps to Get Started:**
-• Week 1-2: Research basic concepts
-• Week 3-4: Apply to small projects
-• Month 2: Join relevant communities
-• Month 3: Share your learnings
-
-**Thought Starter:** How has {topic} impacted your professional journey? What challenges have you overcome?
-
-I'd appreciate hearing your experiences in the comments below.
-
-#{topic.replace(' ', '')} #ProfessionalDevelopment #CareerGrowth #Business #Leadership #Skills"""
-
-# ==================== MAIN APP LAYOUT ====================
-# Create main container
-st.markdown('<div class="main-container">', unsafe_allow_html=True)
-
-# Sidebar
-with st.sidebar:
-    st.markdown('<div style="font-size: 24px; font-weight: 700; color: white; margin-bottom: 30px;">🤖 AI Optimizer</div>', unsafe_allow_html=True)
+with tab1:
+    col1, col2 = st.columns([1, 2])
     
-    # Platform Selection
-    st.markdown("### Platform")
-    platform = st.radio(
-        "Select Platform",
-        ["YouTube", "Twitter/X", "LinkedIn", "Instagram", "Blog"],
-        label_visibility="collapsed"
-    )
-    st.session_state.current_platform = platform.lower()
-    
-    st.markdown("---")
-    
-    # Configuration
-    st.markdown("### Configuration")
-    threshold = st.slider("Quality Threshold", 0, 100, 75)
-    
-    st.markdown("**Platform Mode**")
-    col1, col2, col3 = st.columns(3)
     with col1:
-        st.button("Toolbar", use_container_width=True)
+        st.markdown("### 📱 Content Platforms")
+        
+        platforms = [
+            {"name": "YouTube", "desc": "Video scripts & descriptions", "icon": "🎬"},
+            {"name": "Twitter/X", "desc": "Tweets & threads", "icon": "🐦"},
+            {"name": "LinkedIn", "desc": "Professional posts", "icon": "💼"},
+            {"name": "Instagram", "desc": "Captions & stories", "icon": "📸"},
+            {"name": "Blog", "desc": "Articles & blog posts", "icon": "✍️"}
+        ]
+        
+        for platform in platforms:
+            st.markdown(f"""
+            <div class="platform-card">
+                <div class="platform-icon">{platform['icon']}</div>
+                <h4 style="margin: 0; color: var(--text-light);">{platform['name']}</h4>
+                <p style="color: var(--text-gray); margin: 0.5rem 0 0 0; font-size: 0.9rem;">
+                    {platform['desc']}
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
+    
     with col2:
-        st.button("Type", use_container_width=True)
-    with col3:
-        st.button("Professional", use_container_width=True, type="primary")
-    
-    st.markdown("**Main Mode**")
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        st.button("ML", use_container_width=True, type="primary")
-    with col2:
-        st.button("Length", use_container_width=True)
-    with col3:
-        st.button("Problem", use_container_width=True)
-    
-    st.markdown("---")
-    
-    # Topic Input
-    topic = st.text_input(
-        "**Enter Topic**",
-        value=st.session_state.current_topic,
-        placeholder="Enter any topic..."
-    )
-    st.session_state.current_topic = topic
-    
-    # Buttons
-    col1, col2 = st.columns(2)
-    with col1:
-        generate_clicked = st.button("🚀 Generate", type="primary", use_container_width=True)
-    with col2:
-        abtest_clicked = st.button("🧪 A/B Test", use_container_width=True)
-    
-    st.markdown("---")
-    st.markdown(f"**Time:** {datetime.now().strftime('%H:%M %d-%m-%Y')}")
-
-# Main Content Area
-st.markdown('<div style="padding: 30px;">', unsafe_allow_html=True)
-
-# Header
-st.markdown('<div class="main-header">AI Content Optimizer + Test Coach + A/B Testing</div>', unsafe_allow_html=True)
-st.markdown('<div class="sub-header">Professional AI-powered content optimization platform</div>', unsafe_allow_html=True)
-
-# Topic Input Section
-st.markdown('<div class="pro-card">', unsafe_allow_html=True)
-st.markdown("### Enter Any Topic")
-col1, col2, col3 = st.columns([3, 1, 1])
-with col1:
-    topic_input = st.text_input(
-        "Enter your topic",
-        value=st.session_state.current_topic,
-        placeholder="Enter ANY topic (e.g., 'How to bake sourdough bread', 'Benefits of meditation', 'Future of electric cars')",
-        label_visibility="collapsed"
-    )
-    if topic_input:
-        st.session_state.current_topic = topic_input
-
-with col2:
-    if st.button("🚀 Generate Content", use_container_width=True):
-        st.session_state.generate_content = True
-
-with col3:
-    if st.button("🧪 Run A/B Test", use_container_width=True, type="secondary"):
-        st.session_state.run_abtest = True
-
-st.caption("💡 Tip: You can enter ANY topic - from cooking recipes to quantum physics!")
-st.markdown('</div>', unsafe_allow_html=True)
-
-# Two Column Layout
-col1, col2 = st.columns(2)
-
-# Left Column - Configuration Panel
-with col1:
-    st.markdown('<div class="pro-card">', unsafe_allow_html=True)
-    
-    # Card Header
-    header_col1, header_col2 = st.columns([3, 1])
-    with header_col1:
-        st.markdown('<div class="card-title">Configuration Panel</div>', unsafe_allow_html=True)
-        st.markdown('<div class="card-subtitle">Adjust settings for optimal content generation</div>', unsafe_allow_html=True)
-    with header_col2:
-        st.markdown('<div class="pro-badge badge-blue">Active</div>', unsafe_allow_html=True)
-    
-    # Platform Selection
-    st.markdown("**Platform**")
-    platform_cols = st.columns(3)
-    platforms_display = ["Toolbar", "Type", "Professional"]
-    for idx, pcol in enumerate(platform_cols):
-        with pcol:
-            st.button(platforms_display[idx], key=f"platform_{idx}", use_container_width=True)
-    
-    # Mode Selection
-    st.markdown("**Main / Mode**")
-    mode_cols = st.columns(3)
-    modes_display = ["Machine Learning", "Content Length", "Problem"]
-    for idx, mcol in enumerate(mode_cols):
-        with mcol:
-            st.button(modes_display[idx], key=f"mode_{idx}", use_container_width=True)
-    
-    # Quality Threshold
-    st.markdown(f"**Medium-Quality Threshold: {threshold}**")
-    st.progress(threshold/100)
-    
-    # Optimistic Contents
-    st.markdown("**Optimistic Contents**")
-    st.info(f"What is medium-threshold content for better choice Machine Learning. Before bringing up an initial for model needs, include relevant training, low-rank of use, hunger, vision, and loss. The goal to remain the most engaged audience possible.")
-    
-    st.markdown('</div>', unsafe_allow_html=True)
-
-# Right Column - Content Preview
-with col2:
-    st.markdown('<div class="pro-card">', unsafe_allow_html=True)
-    
-    # Card Header
-    header_col1, header_col2 = st.columns([3, 1])
-    with header_col1:
-        st.markdown('<div class="card-title">Content Preview</div>', unsafe_allow_html=True)
-        st.markdown(f'<div class="card-subtitle">{platform} content preview</div>', unsafe_allow_html=True)
-    with header_col2:
-        st.markdown('<div class="pro-badge badge-green">Ready</div>', unsafe_allow_html=True)
-    
-    # Content Type Selection
-    content_type = st.radio(
-        "Content Type",
-        ["Educational", "Motivational", "Conversational", "Promotional"],
-        horizontal=True,
-        label_visibility="collapsed"
-    )
-    
-    # Generate Content
-    if st.session_state.get('generate_content') or st.session_state.generated_content:
-        with st.spinner(f"Generating {platform} content..."):
-            time.sleep(1.5)
+        st.markdown("### 🚀 AI Content Optimizer")
+        
+        # Topic input
+        topic = st.text_input(
+            "### Enter Any Topic",
+            value="Machine Learning",
+            help="You can enter ANY topic - from cooking recipes to quantum physics"
+        )
+        
+        if st.button("✨ Generate Content", use_container_width=True):
+            st.session_state.topic = topic
             
-            # Generate content based on platform
-            if platform == "YouTube":
-                content = generate_youtube_content(st.session_state.current_topic)
-            elif platform == "Twitter/X":
-                content = generate_twitter_content(st.session_state.current_topic)
-            elif platform == "LinkedIn":
-                content = generate_linkedin_content(st.session_state.current_topic)
-            elif platform == "Instagram":
-                content = f"🌟 **INSTAGRAM CONTENT: {st.session_state.current_topic.upper()}** 🌟\n\nReady to master {st.session_state.current_topic}? Here's your complete guide!"
-            else:  # Blog
-                content = f"# Complete Guide to {st.session_state.current_topic}\n\nProfessional blog content about {st.session_state.current_topic} with detailed analysis."
-            
-            st.session_state.generated_content = content
-            
-            # Display Content
+            # Generate sample content
+            st.session_state.generated_content = {
+                "youtube": {
+                    "hook": f"Have you ever wondered about {topic}? Whether you're a beginner or an expert, this video will give you fresh insights that might surprise you!",
+                    "structure": [
+                        "0:00 - Introduction to " + topic,
+                        "1:30 - Key Concepts Explained",
+                        "3:45 - Real-world Applications",
+                        "5:20 - Getting Started Guide",
+                        "7:00 - Future Trends"
+                    ]
+                }
+            }
+        
+        # Display generated content if available
+        if st.session_state.generated_content:
             st.markdown("---")
-            st.markdown('<div class="content-box">', unsafe_allow_html=True)
-            st.markdown(content)
-            st.markdown('</div>', unsafe_allow_html=True)
+            st.markdown(f"### YouTube Content for '{topic}'")
             
-            # Copy Button
-            if st.button("📋 Copy to Clipboard", use_container_width=True):
-                st.success("✅ Content copied!")
+            with st.expander("📹 Video Script & Description", expanded=True):
+                content = st.session_state.generated_content["youtube"]
+                
+                st.markdown("#### 🎣 HOOK (First 15 seconds)")
+                st.info(content["hook"])
+                
+                st.markdown("#### 📋 VIDEO STRUCTURE")
+                for item in content["structure"]:
+                    st.markdown(f"- {item}")
+                
+                if st.button("📋 Copy Content", use_container_width=True):
+                    st.success("Content copied to clipboard!")
             
-            # Metrics
+            # A/B Testing Section
             st.markdown("---")
-            metric_cols = st.columns(3)
-            with metric_cols[0]:
-                st.markdown('<div class="metric-big metric-engagement">77.07</div>', unsafe_allow_html=True)
-                st.markdown('<div class="metric-label">Engagement</div>', unsafe_allow_html=True)
-            with metric_cols[1]:
-                st.markdown('<div class="metric-big metric-clarity">54.54</div>', unsafe_allow_html=True)
-                st.markdown('<div class="metric-label">Clarity</div>', unsafe_allow_html=True)
-            with metric_cols[2]:
-                st.markdown('<div class="metric-big metric-sentiment">0.0011%</div>', unsafe_allow_html=True)
-                st.markdown('<div class="metric-label">Sentiment</div>', unsafe_allow_html=True)
-    else:
-        st.info("👆 Click 'Generate Content' to create professional content")
-    
-    st.markdown('</div>', unsafe_allow_html=True)
+            st.markdown("### 🔬 A/B Testing Variations")
+            
+            col_a, col_b, col_c = st.columns(3)
+            
+            with col_a:
+                st.markdown("""
+                <div class="content-card">
+                    <h4>💬 Conversational</h4>
+                    <p style="color: var(--text-gray); font-size: 0.9rem;">
+                        Friendly and approachable style using everyday language.
+                    </p>
+                </div>
+                """, unsafe_allow_html=True)
+            
+            with col_b:
+                st.markdown("""
+                <div class="content-card">
+                    <h4>👔 Professional</h4>
+                    <p style="color: var(--text-gray); font-size: 0.9rem;">
+                        Formal and expert-level tone for professional audiences.
+                    </p>
+                </div>
+                """, unsafe_allow_html=True)
+            
+            with col_c:
+                st.markdown("""
+                <div class="content-card">
+                    <h4>🚀 Motivational</h4>
+                    <p style="color: var(--text-gray); font-size: 0.9rem;">
+                        Inspiring and energetic tone to motivate your audience.
+                    </p>
+                </div>
+                """, unsafe_allow_html=True)
+            
+            st.markdown("#### Run A/B Test")
+            
+            test_col1, test_col2 = st.columns(2)
+            
+            with test_col1:
+                if st.button("⚡ Quick Test (3 variants)", use_container_width=True):
+                    # Simulate test results
+                    st.session_state.test_results = {
+                        "impressions": 4945,
+                        "engagement": 67.7,
+                        "conversion": 9.2,
+                        "confidence": 91.0,
+                        "variants": {
+                            "Conversational": 73,
+                            "Professional": 65,
+                            "Motivational": 65
+                        }
+                    }
+                    st.rerun()
+            
+            with test_col2:
+                if st.button("📊 Comprehensive Test (5 variants)", use_container_width=True):
+                    st.info("Starting comprehensive A/B test...")
+                    # Simulate test results
+                    st.session_state.test_results = {
+                        "impressions": 7500,
+                        "engagement": 72.3,
+                        "conversion": 11.5,
+                        "confidence": 95.0,
+                        "variants": {
+                            "Conversational": 78,
+                            "Professional": 68,
+                            "Motivational": 70,
+                            "Technical": 65,
+                            "Storytelling": 72
+                        }
+                    }
+                    st.rerun()
 
-# A/B Testing Section
-if st.session_state.get('run_abtest'):
-    st.markdown("### 🧪 A/B Testing Results")
-    
-    with st.spinner("Running A/B test analysis..."):
-        time.sleep(2)
+with tab2:
+    if st.session_state.test_results:
+        results = st.session_state.test_results
         
-        # Test Coach Panel
-        st.markdown('<div class="pro-card">', unsafe_allow_html=True)
+        # Display stats in a grid
+        st.markdown("## 📈 Test Results & Analysis")
         
-        # Header
-        header_col1, header_col2 = st.columns([3, 1])
-        with header_col1:
-            st.markdown('<div class="card-title">Test Coach - Predictive Insights</div>', unsafe_allow_html=True)
-            st.markdown('<div class="card-subtitle">Performance analysis and optimization recommendations</div>', unsafe_allow_html=True)
-        with header_col2:
-            st.markdown('<div class="pro-badge badge-green">High Engagement</div>', unsafe_allow_html=True)
-        
-        # Stats
         col1, col2, col3, col4 = st.columns(4)
+        
         with col1:
-            st.metric("Estimated Reach", "1,043 - 1,728")
+            st.markdown(f"""
+            <div class="stat-card">
+                <p class="stat-number">{results['impressions']:,}</p>
+                <p class="stat-label">Total Impressions</p>
+            </div>
+            """, unsafe_allow_html=True)
+        
         with col2:
-            st.metric("Target Audience", "General")
+            st.markdown(f"""
+            <div class="stat-card">
+                <p class="stat-number">{results['engagement']}%</p>
+                <p class="stat-label">Avg Engagement</p>
+            </div>
+            """, unsafe_allow_html=True)
+        
         with col3:
-            st.metric("Post Purpose", "Education")
+            st.markdown(f"""
+            <div class="stat-card">
+                <p class="stat-number">{results['conversion']}%</p>
+                <p class="stat-label">Conversion Rate</p>
+            </div>
+            """, unsafe_allow_html=True)
+        
         with col4:
-            st.metric("Best Time", "7-9 PM")
+            st.markdown(f"""
+            <div class="stat-card">
+                <p class="stat-number">{results['confidence']}%</p>
+                <p class="stat-label">Confidence Level</p>
+            </div>
+            """, unsafe_allow_html=True)
         
-        # Winner
-        st.success("🏆 **Winner: Variant A** (Performance score: 77.32)")
+        # Engagement scores
+        st.markdown("### 📊 Variant Performance")
         
-        # Chart
-        st.markdown("**A/B Testing Visualization**")
+        # Create bar chart
+        fig = go.Figure(data=[
+            go.Bar(
+                x=list(results['variants'].keys()),
+                y=list(results['variants'].values()),
+                marker_color=['#6366f1', '#94a3b8', '#94a3b8', '#94a3b8', '#94a3b8'][:len(results['variants'])],
+                text=[f"{v}%" for v in results['variants'].values()],
+                textposition='auto',
+            )
+        ])
         
-        # Create chart bars
-        chart_cols = st.columns(2)
-        with chart_cols[0]:
-            st.markdown('<div style="height: 160px; width: 80px; background: linear-gradient(to top, #3b82f6, #60a5fa); border-radius: 8px 8px 0 0; margin: 0 auto; position: relative;">'
-                       '<div style="position: absolute; top: -30px; left: 50%; transform: translateX(-50%); font-weight: 700;">77.32%</div>'
-                       '<div style="position: absolute; bottom: -25px; left: 50%; transform: translateX(-50%); font-weight: 600;">Variant A</div>'
-                       '</div>', unsafe_allow_html=True)
-            st.markdown('<div style="text-align: center; background: #10b981; color: white; padding: 4px 8px; border-radius: 12px; font-size: 12px; margin-top: 10px; width: fit-content; margin: 10px auto;">Winner</div>', unsafe_allow_html=True)
+        fig.update_layout(
+            plot_bgcolor='rgba(0,0,0,0)',
+            paper_bgcolor='rgba(0,0,0,0)',
+            font_color='white',
+            showlegend=False,
+            height=300
+        )
         
-        with chart_cols[1]:
-            st.markdown('<div style="height: 120px; width: 80px; background: linear-gradient(to top, #94a3b8, #cbd5e1); border-radius: 8px 8px 0 0; margin: 0 auto; position: relative;">'
-                       '<div style="position: absolute; top: -30px; left: 50%; transform: translateX(-50%); font-weight: 700;">63.96%</div>'
-                       '<div style="position: absolute; bottom: -25px; left: 50%; transform: translateX(-50%); font-weight: 600;">Variant B</div>'
-                       '</div>', unsafe_allow_html=True)
+        st.plotly_chart(fig, use_container_width=True)
         
-        st.markdown('</div>', unsafe_allow_html=True)
+        # AI Recommendations
+        st.markdown("### 🤖 AI Recommendations")
         
-        # Variations
-        st.markdown("### Content Variations")
+        recommendations = [
+            f"**Winner Selected**: 'Conversational' style with {max(results['variants'].values())}% engagement score",
+            "**Statistical Significance**: 80% higher than next best variant",
+            f"**Optimization Opportunity**: Consider refining the messaging or testing different angles for '{st.session_state.topic}'",
+            "**Style Analysis**: Friendly and approachable approach resonates best with your audience",
+            "**Testing Duration**: For conclusive results, run this test for 48-72 hours before finalizing"
+        ]
         
-        # Variation 1
-        st.markdown('<div class="variation-container active">', unsafe_allow_html=True)
-        col1, col2 = st.columns([3, 1])
-        with col1:
-            st.markdown("**Variation 1: Professional Tone**")
-            st.caption("Data-driven, authoritative approach with statistics and structured frameworks")
-        with col2:
-            st.markdown('<div class="pro-badge badge-blue">Best Clarity</div>', unsafe_allow_html=True)
+        for rec in recommendations:
+            st.markdown(f"- {rec}")
         
-        metric_cols = st.columns(3)
-        with metric_cols[0]:
-            st.markdown('<div class="metric-big metric-engagement">77.07</div>', unsafe_allow_html=True)
-            st.markdown('<div class="metric-label">Engagement</div>', unsafe_allow_html=True)
-        with metric_cols[1]:
-            st.markdown('<div class="metric-big metric-clarity">54.54</div>', unsafe_allow_html=True)
-            st.markdown('<div class="metric-label">Clarity</div>', unsafe_allow_html=True)
-        with metric_cols[2]:
-            st.markdown('<div class="metric-big metric-sentiment">0.0011%</div>', unsafe_allow_html=True)
-            st.markdown('<div class="metric-label">Sentiment</div>', unsafe_allow_html=True)
+        st.markdown("---")
+        st.markdown("### 🏆 Winner: Conversational Style")
         
-        if st.button("Select Variation 1", key="select_var1", use_container_width=True):
-            st.success("✅ Selected Variation 1 as your primary content!")
+        # Display winning content
+        st.markdown("#### 🎉 Winning Content Preview")
+        st.markdown(f"""
+        <div class="content-card">
+            <h4>💬 Conversational Approach for '{st.session_state.topic}'</h4>
+            <p>Hey there! Let's chat about {st.session_state.topic} like friends. This variation uses everyday 
+            language and relatable examples to make complex concepts easy to understand.</p>
+            <p><strong>Hook:</strong> {st.session_state.generated_content.get('youtube', {}).get('hook', 'Have you ever wondered...')}</p>
+        </div>
+        """, unsafe_allow_html=True)
         
-        st.markdown('</div>', unsafe_allow_html=True)
-        
-        # Variation 2
-        st.markdown('<div class="variation-container">', unsafe_allow_html=True)
-        col1, col2 = st.columns([3, 1])
-        with col1:
-            st.markdown("**Variation 2: Conversational Style**")
-            st.caption("Friendly, approachable tone with personal anecdotes and simple language")
-        with col2:
-            st.markdown('<div class="pro-badge badge-orange">High Engagement</div>', unsafe_allow_html=True)
-        
-        metric_cols = st.columns(3)
-        with metric_cols[0]:
-            st.markdown('<div class="metric-big metric-engagement">77.32</div>', unsafe_allow_html=True)
-            st.markdown('<div class="metric-label">Engagement</div>', unsafe_allow_html=True)
-        with metric_cols[1]:
-            st.markdown('<div class="metric-big metric-clarity">24.17</div>', unsafe_allow_html=True)
-            st.markdown('<div class="metric-label">Clarity</div>', unsafe_allow_html=True)
-        with metric_cols[2]:
-            st.markdown('<div class="metric-big metric-sentiment">1.0311%</div>', unsafe_allow_html=True)
-            st.markdown('<div class="metric-label">Sentiment</div>', unsafe_allow_html=True)
-        
-        if st.button("Select Variation 2", key="select_var2", use_container_width=True):
-            st.success("✅ Selected Variation 2 as your primary content!")
-        
-        st.markdown('</div>', unsafe_allow_html=True)
-        
-        # Recommendations
-        st.markdown("### 💡 AI Recommendations")
-        st.write("""
-        • Test posting time for higher reach
-        • Optimize thumbnail for better CTR
-        • Add relevant hashtags for discoverability
-        • Include clear call-to-action in description
-        • Engage with comments within first hour
-        """)
+        if st.button("🚀 Deploy Winning Variant", use_container_width=True):
+            st.success("Winning variant deployed to all platforms!")
+    
+    else:
+        st.info("No test results yet. Run an A/B test in the 'Generate Content' tab to see results here.")
 
 # Footer
-st.markdown('<div class="footer">', unsafe_allow_html=True)
-footer_col1, footer_col2 = st.columns(2)
-with footer_col1:
-    st.markdown("🌧️ Light rain Tomorrow | 🔍 Search")
-with footer_col2:
-    st.markdown("🌐 ENG | IN")
-st.markdown('</div>', unsafe_allow_html=True)
-
-# Close containers
-st.markdown('</div>', unsafe_allow_html=True)  # Close padding div
-st.markdown('</div>', unsafe_allow_html=True)  # Close main container
-
-# Clear session states
-if st.session_state.get('generate_content'):
-    st.session_state.generate_content = False
-if st.session_state.get('run_abtest'):
-    st.session_state.run_abtest = False
+st.markdown("---")
+st.markdown(
+    """
+    <div style="text-align: center; color: var(--text-gray); padding: 2rem;">
+        <h3>🚀 BIG IN</h3>
+        <p>AI Content Marketing Optimizer v1.0</p>
+    </div>
+    """, 
+    unsafe_allow_html=True
+)
