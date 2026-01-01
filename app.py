@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 import plotly.graph_objects as go
 
 
-Page configuration
+# Page configuration
 st.set_page_config(
     page_title="AI Content Optimizer",
     page_icon="🚀",
