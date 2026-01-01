@@ -3,6 +3,10 @@ import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
 import plotly.graph_objects as go
+# Run this once in a Python shell or add to your app
+import nltk
+nltk.download('punkt')
+nltk.download('averaged_perceptron_tagger')
 
 # Page configuration
 st.set_page_config(
