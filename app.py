@@ -2,6 +2,7 @@ import streamlit as st
 import random
 import time
 from datetime import datetime
+APP_VERSION = "2.0" 
 
 # ==================== PAGE CONFIG ====================
 st.set_page_config(
