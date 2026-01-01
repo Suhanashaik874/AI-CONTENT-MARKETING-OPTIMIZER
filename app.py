@@ -3,10 +3,38 @@ import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
 import plotly.graph_objects as go
-# Run this once in a Python shell or add to your app
-import nltk
-nltk.download('punkt')
-nltk.download('averaged_perceptron_tagger')
+
+
+ Page configuration
+st.set_page_config(
+    page_title="AI Content Optimizer",
+    page_icon="🚀",
+    layout="wide"
+)
+
+# Simple sentiment analysis without nltk
+def analyze_sentiment_simple(text):
+    """
+    Simple sentiment analysis without external dependencies
+    """
+    positive_words = ['great', 'good', 'excellent', 'amazing', 'awesome', 'love', 'best', 'perfect', 'happy', 'win', 'success']
+    negative_words = ['bad', 'poor', 'terrible', 'awful', 'hate', 'worst', 'failure', 'sad', 'angry', 'problem', 'issue']
+    
+    text_lower = text.lower()
+    pos_count = sum(1 for word in positive_words if word in text_lower)
+    neg_count = sum(1 for word in negative_words if word in text_lower)
+    
+    if pos_count > neg_count:
+        return "positive", 0.3, "😊"
+    elif neg_count > pos_count:
+        return "negative", -0.2, "😟"
+    else:
+        return "neutral", 0.0, "😐"
+
+# Use this function instead of TextBlob
+def analyze_sentiment(text):
+    return analyze_sentiment_simple(text)
+
 
 # Page configuration
 st.set_page_config(
